@@ -1,0 +1,2 @@
+sdC ata port 1F0 ctl 3F4 irq 14 intr-ok 2 intr-busy 0 intr-nil-drive 0
+sdD ata port 170 ctl 374 irq 15 intr-ok 25 intr-busy 0 intr-nil-drive 0

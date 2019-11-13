@@ -1,0 +1,10 @@
+inquiry QEMU HARDDISK                           
+config 0040 capabilities 0B00 dma 00550020 dmactl 00550020 rwm 16 rwmctl 0 lba48always off
+interrupts read 2 write 0 cmds 0
+geometry 209715200 512 16383 16 63
+part data 0 209715200
+part plan9 63 209712510
+part 9fat 63 204863
+part nvram 204863 204864
+part fossil 204864 208663934
+part swap 208663934 209712510

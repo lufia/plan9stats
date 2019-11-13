@@ -1,0 +1,7 @@
+cpu Core i7/Xeon 2403 pge
+pge on
+coherence mfence
+cmpswap cmpswap486
+i8253set on
+cache default wb
+cache 0xe0000000 536870912 uc
