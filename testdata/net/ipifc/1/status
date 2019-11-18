@@ -1,0 +1,2 @@
+device /dev/null maxtu 16384 sendra 0 recvra 0 mflag 0 oflag 0 maxraint 600000 minraint 200000 linkmtu 0 reachtime 0 rxmitra 0 ttl 255 routerlt 1800000 pktin 0 pktout 0 errin 0 errout 0
+	127.0.0.1                                /104       127.0.0.0                                4294967295   4294967295  
