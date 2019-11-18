@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // Host represents host status.
@@ -23,6 +24,9 @@ type CPU struct {
 }
 
 type Storage struct {
+	Name     string
+	Model    string
+	Capacity int64
 }
 
 // ReadHost returns host status.
@@ -63,6 +67,10 @@ func readCPUType(rootdir string) (*CPU, error) {
 	}, nil
 }
 
+var (
+	delim = []byte{' '}
+)
+
 func readStorages(rootdir string) ([]*Storage, error) {
 	sdctl := filepath.Join(rootdir, "/dev/sdctl")
 	f, err := os.Open(sdctl)
@@ -74,12 +82,67 @@ func readStorages(rootdir string) ([]*Storage, error) {
 	var a []*Storage
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		fields := bytes.Split(scanner.Bytes(), []byte{' '})
-		_ = fields[0] // TODO(lufia): read subdirs
-		a = append(a, &Storage{})
+		fields := bytes.Split(scanner.Bytes(), delim)
+		if len(fields) == 0 {
+			continue
+		}
+		exp := string(fields[0]) + "*"
+		if !strings.HasPrefix(exp, "sd") {
+			continue
+		}
+		dir := filepath.Join(rootdir, "/dev", exp)
+		m, err := filepath.Glob(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, dir := range m {
+			s, err := readStorage(dir)
+			if err != nil {
+				return nil, err
+			}
+			a = append(a, s)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 	return a, nil
+}
+
+func readStorage(dir string) (*Storage, error) {
+	ctl := filepath.Join(dir, "ctl")
+	f, err := os.Open(ctl)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var s Storage
+	s.Name = filepath.Base(dir)
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		switch {
+		case bytes.HasPrefix(line, []byte("inquiry")):
+			s.Model = string(bytes.TrimSpace(line[7:]))
+		case bytes.HasPrefix(line, []byte("geometry")):
+			fields := bytes.Split(line, delim)
+			if len(fields) < 3 {
+				continue
+			}
+			sec, err := strconv.ParseInt(string(fields[1]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			size, err := strconv.ParseInt(string(fields[2]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			s.Capacity = sec * size
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return &s, nil
 }

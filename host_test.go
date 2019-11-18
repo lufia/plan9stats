@@ -2,6 +2,8 @@ package stats
 
 import (
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestReadHost(t *testing.T) {
@@ -9,14 +11,24 @@ func TestReadHost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "Core i7/Xeon"; h.CPU.Name != want {
-		t.Errorf("CPU.Name = %v; want %v", h.CPU.Name, want)
+	want := &Host{
+		CPU: &CPU{
+			Name: "Core i7/Xeon",
+			MHz:  2403,
+		},
+		Storages: []*Storage{
+			&Storage{
+				Name:     "sdC0",
+				Model:    "QEMU HARDDISK",
+				Capacity: 209715200 * 512, // 100GB
+			},
+			&Storage{
+				Name:  "sdD0",
+				Model: "QEMU    QEMU DVD-ROM    0.12",
+			},
+		},
 	}
-	if want := 2403; h.CPU.MHz != want {
-		t.Errorf("CPU.MHz = %v; want %v", h.CPU.MHz, want)
-	}
-
-	if want := 2; len(h.Storages) != want {
-		t.Errorf("len(Storages) = %d; want %d", len(h.Storages), want)
+	if !cmp.Equal(h, want) {
+		t.Errorf("ReadHost: %v", cmp.Diff(h, want))
 	}
 }
