@@ -14,19 +14,40 @@ import (
 
 // Host represents host status.
 type Host struct {
-	CPU      *CPU
-	Storages []*Storage
+	CPU       *CPU
+	Memory    *Memory
+	Storages  []*Storage
+	Ethernets []*Ethernet
 }
 
 type CPU struct {
-	Name string
-	MHz  int // clock rate in MHz
+	Name  string
+	Clock int // clock rate in MHz
+}
+
+type Memory struct {
+	Total        int64 // in byte
+	PageSize     int64 // in byte
+	KernelPages  int64
+	UserPages    Gauge
+	SwapPages    Gauge
+	KernelMalloc Gauge // in byte
+	KernelDraw   Gauge // in byte
 }
 
 type Storage struct {
 	Name     string
 	Model    string
 	Capacity int64
+}
+
+type Gauge struct {
+	Used  int64
+	Avail int64
+}
+
+type Ethernet struct {
+	Addr string
 }
 
 // ReadHost returns host status.
@@ -37,6 +58,12 @@ func ReadHost(rootdir string) (*Host, error) {
 	}
 	var h Host
 	h.CPU = cpu
+
+	mem, err := readSwap(rootdir)
+	if err != nil {
+		return nil, err
+	}
+	h.Memory = mem
 
 	a, err := readStorages(rootdir)
 	if err != nil {
@@ -62,14 +89,77 @@ func readCPUType(rootdir string) (*CPU, error) {
 		return nil, err
 	}
 	return &CPU{
-		Name: string(b[:i]),
-		MHz:  clock,
+		Name:  string(b[:i]),
+		Clock: clock,
 	}, nil
 }
 
 var (
 	delim = []byte{' '}
 )
+
+func readSwap(rootdir string) (*Memory, error) {
+	swap := filepath.Join(rootdir, "/dev/swap")
+	f, err := os.Open(swap)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var mem Memory
+	m := map[string]interface{}{
+		"memory":        &mem.Total,
+		"pagesize":      &mem.PageSize,
+		"kernel":        &mem.KernelPages,
+		"user":          &mem.UserPages,
+		"swap":          &mem.SwapPages,
+		"kernel malloc": &mem.KernelMalloc,
+		"kernel draw":   &mem.KernelDraw,
+	}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		fields := bytes.SplitN(scanner.Bytes(), delim, 2)
+		if len(fields) < 2 {
+			continue
+		}
+		switch key := string(fields[1]); key {
+		case "memory", "pagesize", "kernel":
+			v := m[key].(*int64)
+			n, err := strconv.ParseInt(string(fields[0]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			*v = n
+		case "user", "swap", "kernel malloc", "kernel draw":
+			v := m[key].(*Gauge)
+			g, err := parseGauge(string(fields[0]))
+			if err != nil {
+				return nil, err
+			}
+			*v = g
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return &mem, nil
+}
+
+func parseGauge(s string) (Gauge, error) {
+	a := strings.SplitN(s, "/", 2)
+	if len(a) != 2 {
+		return Gauge{}, fmt.Errorf("can't parse gauge: %s", s)
+	}
+	u, err := strconv.ParseInt(a[0], 10, 64)
+	if err != nil {
+		return Gauge{}, err
+	}
+	n, err := strconv.ParseInt(a[1], 10, 64)
+	if err != nil {
+		return Gauge{}, err
+	}
+	return Gauge{Used: u, Avail: n}, nil
+}
 
 func readStorages(rootdir string) ([]*Storage, error) {
 	sdctl := filepath.Join(rootdir, "/dev/sdctl")
