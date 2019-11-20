@@ -16,14 +16,14 @@ func TestReadHost(t *testing.T) {
 			Name:  "Core i7/Xeon",
 			Clock: 2403,
 		},
-		Memory: &Memory{
-			Total:        1071185920,
-			PageSize:     4096,
-			KernelPages:  61372,
-			UserPages:    Gauge{Used: 2792, Avail: 200148},
-			SwapPages:    Gauge{Used: 0, Avail: 160000},
-			KernelMalloc: Gauge{Used: 9046176, Avail: 219352384},
-			KernelDraw:   Gauge{Used: 0, Avail: 16777216},
+		MemStats: &MemStats{
+			Total:       1071185920,
+			PageSize:    4096,
+			KernelPages: 61372,
+			UserPages:   Ratio{Used: 2792, Avail: 200148},
+			SwapPages:   Ratio{Used: 0, Avail: 160000},
+			Malloced:    Ratio{Used: 9046176, Avail: 219352384},
+			Graphics:    Ratio{Used: 0, Avail: 16777216},
 		},
 		Storages: []*Storage{
 			&Storage{
