@@ -18,10 +18,10 @@ var (
 
 // Host represents host status.
 type Host struct {
-	CPU       *CPU
-	MemStats  *MemStats
-	Storages  []*Storage
-	Ethernets []*Ethernet
+	CPU        *CPU
+	MemStats   *MemStats
+	Storages   []*Storage
+	Interfaces []*Interface
 }
 
 // CPU
@@ -117,9 +117,54 @@ type Storage struct {
 	Capacity int64
 }
 
-type Ethernet struct {
+type Interface struct {
+	Name string
 	Addr string
 }
+
+const (
+	maxEthernets = 8
+)
+
+func ReadInterfaces(mtpt string) ([]*Interface, error) {
+	var a []*Interface
+	for i := 0; i < maxEthernets; i++ {
+		p, err := readInterface(mtpt, i)
+		if os.IsNotExist(err) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		a = append(a, p)
+	}
+	return a, nil
+}
+
+func readInterface(mtpt string, i int) (*Interface, error) {
+	ether := fmt.Sprintf("ether%d", i)
+	dir := filepath.Join(mtpt, ether)
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("%s: is not directory", dir)
+	}
+
+	addr, err := ioutil.ReadFile(filepath.Join(dir, "addr"))
+	if err != nil {
+		return nil, err
+	}
+	return &Interface{
+		Name: ether,
+		Addr: string(addr),
+	}, nil
+}
+
+var (
+	ifaceDirs = []string{"/net", "/net.alt"}
+)
 
 // ReadHost returns host status.
 func ReadHost(rootdir string) (*Host, error) {
@@ -141,6 +186,15 @@ func ReadHost(rootdir string) (*Host, error) {
 		return nil, err
 	}
 	h.Storages = a
+
+	for _, s := range ifaceDirs {
+		mtpt := filepath.Join(rootdir, s)
+		ifaces, err := ReadInterfaces(mtpt)
+		if err != nil {
+			return nil, err
+		}
+		h.Interfaces = append(h.Interfaces, ifaces...)
+	}
 	return &h, nil
 }
 

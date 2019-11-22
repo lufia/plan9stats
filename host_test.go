@@ -36,6 +36,12 @@ func TestReadHost(t *testing.T) {
 				Model: "QEMU    QEMU DVD-ROM    0.12",
 			},
 		},
+		Interfaces: []*Interface{
+			&Interface{
+				Name: "ether0",
+				Addr: "525409008379",
+			},
+		},
 	}
 	if !cmp.Equal(h, want) {
 		t.Errorf("ReadHost: %v", cmp.Diff(h, want))
