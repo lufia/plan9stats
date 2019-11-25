@@ -93,21 +93,19 @@ func ReadMemStats(rootdir string) (*MemStats, error) {
 	return &stat, nil
 }
 
-func parseRatio(s string, p *Ratio) error {
+func parseRatio(s string, r *Ratio) error {
 	a := strings.SplitN(s, "/", 2)
 	if len(a) != 2 {
 		return fmt.Errorf("can't parse ratio: %s", s)
 	}
-	u, err := strconv.ParseInt(a[0], 10, 64)
-	if err != nil {
+	var p intParser
+	u := p.ParseInt64(a[0], 10)
+	n := p.ParseInt64(a[1], 10)
+	if err := p.Err(); err != nil {
 		return err
 	}
-	n, err := strconv.ParseInt(a[1], 10, 64)
-	if err != nil {
-		return err
-	}
-	p.Used = u
-	p.Avail = n
+	r.Used = u
+	r.Avail = n
 	return nil
 }
 
@@ -278,12 +276,10 @@ func readStorage(dir string) (*Storage, error) {
 			if len(fields) < 3 {
 				continue
 			}
-			sec, err := strconv.ParseInt(string(fields[1]), 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			size, err := strconv.ParseInt(string(fields[2]), 10, 64)
-			if err != nil {
+			var p intParser
+			sec := p.ParseInt64(string(fields[1]), 10)
+			size := p.ParseInt64(string(fields[2]), 10)
+			if err := p.Err(); err != nil {
 				return nil, err
 			}
 			s.Capacity = sec * size
