@@ -41,3 +41,27 @@ func TestReadSysstat(t *testing.T) {
 		t.Errorf("ReadSysstat: %v", cmp.Diff(stat, want))
 	}
 }
+
+func TestReadIfaceStats(t *testing.T) {
+	stats, err := ReadIfaceStats("testdata/net/ether0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := &IfaceStats{
+		In:               11645518,
+		Link:             0,
+		Out:              269378,
+		NumCRCErr:        0,
+		NumOverflows:     0,
+		NumSoftOverflows: 0,
+		NumFramingErr:    0,
+		NumBufferingErr:  0,
+		NumOutputErr:     0,
+		Promiscuous:      0,
+		Mbps:             1000,
+		Addr:             "525409008379",
+	}
+	if !cmp.Equal(stats, want) {
+		t.Errorf("ReadIfaceStats: %v", cmp.Diff(stats, want))
+	}
+}
