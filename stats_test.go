@@ -43,7 +43,7 @@ func TestReadSysstat(t *testing.T) {
 }
 
 func TestReadIfaceStats(t *testing.T) {
-	stats, err := ReadIfaceStats("testdata/net/ether0")
+	stats, err := ReadIfaceStats("testdata/net", 0)
 	if err != nil {
 		t.Fatal(err)
 	}

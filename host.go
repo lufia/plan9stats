@@ -125,10 +125,10 @@ const (
 	maxEthernets = 8
 )
 
-func ReadInterfaces(mtpt string) ([]*Interface, error) {
+func ReadInterfaces(netroot string) ([]*Interface, error) {
 	var a []*Interface
 	for i := 0; i < maxEthernets; i++ {
-		p, err := readInterface(mtpt, i)
+		p, err := readInterface(netroot, i)
 		if os.IsNotExist(err) {
 			break
 		}
@@ -140,9 +140,9 @@ func ReadInterfaces(mtpt string) ([]*Interface, error) {
 	return a, nil
 }
 
-func readInterface(mtpt string, i int) (*Interface, error) {
+func readInterface(netroot string, i int) (*Interface, error) {
 	ether := fmt.Sprintf("ether%d", i)
-	dir := filepath.Join(mtpt, ether)
+	dir := filepath.Join(netroot, ether)
 	info, err := os.Stat(dir)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func readInterface(mtpt string, i int) (*Interface, error) {
 }
 
 var (
-	ifaceDirs = []string{"/net", "/net.alt"}
+	netdirs = []string{"/net", "/net.alt"}
 )
 
 // ReadHost returns host status.
@@ -192,9 +192,9 @@ func ReadHost(rootdir string) (*Host, error) {
 	}
 	h.Storages = a
 
-	for _, s := range ifaceDirs {
-		mtpt := filepath.Join(rootdir, s)
-		ifaces, err := ReadInterfaces(mtpt)
+	for _, s := range netdirs {
+		netroot := filepath.Join(rootdir, s)
+		ifaces, err := ReadInterfaces(netroot)
 		if err != nil {
 			return nil, err
 		}

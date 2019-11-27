@@ -2,6 +2,7 @@ package stats
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,8 +76,9 @@ type IfaceStats struct {
 	Addr             string
 }
 
-func ReadIfaceStats(dir string) (*IfaceStats, error) {
-	file := filepath.Join(dir, "stats")
+func ReadIfaceStats(netroot string, i int) (*IfaceStats, error) {
+	ether := fmt.Sprintf("ether%d", i)
+	file := filepath.Join(netroot, ether, "stats")
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
