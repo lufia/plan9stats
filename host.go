@@ -18,6 +18,7 @@ var (
 
 // Host represents host status.
 type Host struct {
+	Sysname    string
 	CPU        *CPU
 	MemStats   *MemStats
 	Storages   []*Storage
@@ -166,11 +167,17 @@ var (
 
 // ReadHost returns host status.
 func ReadHost(rootdir string) (*Host, error) {
+	var h Host
+	name, err := readSysname(rootdir)
+	if err != nil {
+		return nil, err
+	}
+	h.Sysname = name
+
 	cpu, err := readCPUType(rootdir)
 	if err != nil {
 		return nil, err
 	}
-	var h Host
 	h.CPU = cpu
 
 	m, err := ReadMemStats(rootdir)
@@ -194,6 +201,15 @@ func ReadHost(rootdir string) (*Host, error) {
 		h.Interfaces = append(h.Interfaces, ifaces...)
 	}
 	return &h, nil
+}
+
+func readSysname(rootdir string) (string, error) {
+	file := filepath.Join(rootdir, "/dev/sysname")
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes.TrimSpace(b)), nil
 }
 
 func readCPUType(rootdir string) (*CPU, error) {

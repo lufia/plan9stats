@@ -12,6 +12,7 @@ func TestReadHost(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := &Host{
+		Sysname: "gnot",
 		CPU: &CPU{
 			Name:  "Core i7/Xeon",
 			Clock: 2403,
