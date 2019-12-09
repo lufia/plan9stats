@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -122,12 +123,13 @@ type Interface struct {
 }
 
 const (
-	maxEthernets = 8
+	numEther = 8  // see ether(3)
+	numIpifc = 16 // see ip(3)
 )
 
 func ReadInterfaces(netroot string) ([]*Interface, error) {
 	var a []*Interface
-	for i := 0; i < maxEthernets; i++ {
+	for i := 0; i < numEther; i++ {
 		p, err := readInterface(netroot, i)
 		if os.IsNotExist(err) {
 			break
@@ -305,4 +307,29 @@ func readStorage(dir string) (*Storage, error) {
 		return nil, err
 	}
 	return &s, nil
+}
+
+type Ipifc struct {
+	ID      int    // number of interface in ipifc dir
+	Dev     string // associated physical device
+	MTU     int    // max transfer unit
+	Sendra6 uint8  // on == send router adv
+	Recvra6 uint8  // on == recv router adv
+
+	Pktin  int64 // packets read
+	Pktout int64 // packets written
+	Errin  int64 // read errors
+	Errout int64 // write errors
+}
+
+type Iplifc struct {
+	IP            net.IP
+	Mask          net.IPMask
+	Net           net.IP // ip & mask
+	PerfLifetime  int64  // preferred lifetime
+	ValidLifetime int64  // valid lifetime
+}
+
+type Ipv6rp struct {
+	// TODO(lufia): see ip(2)
 }
