@@ -50,6 +50,7 @@ type Ratio struct {
 	Avail int64
 }
 
+// ReadMemStats reads memory statistics from /dev/swap.
 func ReadMemStats(rootdir string) (*MemStats, error) {
 	swap := filepath.Join(rootdir, "/dev/swap")
 	f, err := os.Open(swap)
@@ -127,12 +128,13 @@ const (
 	numIpifc = 16 // see ip(3)
 )
 
+// ReadInterfaces reads network interfaces from etherN.
 func ReadInterfaces(netroot string) ([]*Interface, error) {
 	var a []*Interface
 	for i := 0; i < numEther; i++ {
 		p, err := readInterface(netroot, i)
 		if os.IsNotExist(err) {
-			break
+			continue
 		}
 		if err != nil {
 			return nil, err
@@ -167,7 +169,7 @@ var (
 	netdirs = []string{"/net", "/net.alt"}
 )
 
-// ReadHost returns host status.
+// ReadHost reads host status.
 func ReadHost(rootdir string) (*Host, error) {
 	var h Host
 	name, err := readSysname(rootdir)

@@ -6,13 +6,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestReadSysstat(t *testing.T) {
-	stat, err := ReadSysstat("testdata")
+func TestReadSysStats(t *testing.T) {
+	stat, err := ReadSysStats("testdata")
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []*Sysstat{
-		&Sysstat{
+	want := []*SysStats{
+		&SysStats{
 			ID:           0,
 			NumCtxSwitch: 59251106,
 			NumInterrupt: 37524162,
@@ -24,7 +24,7 @@ func TestReadSysstat(t *testing.T) {
 			Idle:         100,
 			Interrupt:    0,
 		},
-		&Sysstat{
+		&SysStats{
 			ID:           1,
 			NumCtxSwitch: 219155408,
 			NumInterrupt: 28582838,
@@ -38,19 +38,19 @@ func TestReadSysstat(t *testing.T) {
 		},
 	}
 	if !cmp.Equal(stat, want) {
-		t.Errorf("ReadSysstat: %v", cmp.Diff(stat, want))
+		t.Errorf("ReadSysStats: %v", cmp.Diff(stat, want))
 	}
 }
 
-func TestReadIfaceStats(t *testing.T) {
-	stats, err := ReadIfaceStats("testdata/net", 0)
+func TestReadInterfaceStats(t *testing.T) {
+	stats, err := ReadInterfaceStats("testdata/net", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := &IfaceStats{
-		In:               11645518,
+	want := &InterfaceStats{
+		PacketsReceived:  11645518,
 		Link:             0,
-		Out:              269378,
+		PacketsSent:      269378,
 		NumCRCErr:        0,
 		NumOverflows:     0,
 		NumSoftOverflows: 0,
@@ -62,6 +62,6 @@ func TestReadIfaceStats(t *testing.T) {
 		Addr:             "525409008379",
 	}
 	if !cmp.Equal(stats, want) {
-		t.Errorf("ReadIfaceStats: %v", cmp.Diff(stats, want))
+		t.Errorf("ReadInterfaceStats: %v", cmp.Diff(stats, want))
 	}
 }

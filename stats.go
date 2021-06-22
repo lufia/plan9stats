@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type Sysstat struct {
+type SysStats struct {
 	ID           int
 	NumCtxSwitch int64
 	NumInterrupt int64
@@ -21,7 +21,8 @@ type Sysstat struct {
 	Interrupt    int   // percentage
 }
 
-func ReadSysstat(rootdir string) ([]*Sysstat, error) {
+// ReadSysStats reads system statistics from /dev/sysstat.
+func ReadSysStats(rootdir string) ([]*SysStats, error) {
 	file := filepath.Join(rootdir, "/dev/sysstat")
 	f, err := os.Open(file)
 	if err != nil {
@@ -30,7 +31,7 @@ func ReadSysstat(rootdir string) ([]*Sysstat, error) {
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
-	var stats []*Sysstat
+	var stats []*SysStats
 	for scanner.Scan() {
 		a := strings.Fields(scanner.Text())
 		if len(a) != 10 {
@@ -38,7 +39,7 @@ func ReadSysstat(rootdir string) ([]*Sysstat, error) {
 		}
 		var (
 			p    intParser
-			stat Sysstat
+			stat SysStats
 		)
 		stat.ID = p.ParseInt(a[0], 10)
 		stat.NumCtxSwitch = p.ParseInt64(a[1], 10)
@@ -61,10 +62,10 @@ func ReadSysstat(rootdir string) ([]*Sysstat, error) {
 	return stats, nil
 }
 
-type IfaceStats struct {
-	In               int64 // in packets
+type InterfaceStats struct {
+	PacketsReceived  int64 // in packets
 	Link             int   // link status
-	Out              int64 // out packets
+	PacketsSent      int64 // out packets
 	NumCRCErr        int   // input CRC errors
 	NumOverflows     int   // packet overflows
 	NumSoftOverflows int   // software overflow
@@ -76,7 +77,7 @@ type IfaceStats struct {
 	Addr             string
 }
 
-func ReadIfaceStats(netroot string, i int) (*IfaceStats, error) {
+func ReadInterfaceStats(netroot string, i int) (*InterfaceStats, error) {
 	ether := fmt.Sprintf("ether%d", i)
 	file := filepath.Join(netroot, ether, "stats")
 	f, err := os.Open(file)
@@ -85,7 +86,7 @@ func ReadIfaceStats(netroot string, i int) (*IfaceStats, error) {
 	}
 	defer f.Close()
 
-	var stats IfaceStats
+	var stats InterfaceStats
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		s := strings.TrimSpace(scanner.Text())
@@ -97,11 +98,11 @@ func ReadIfaceStats(netroot string, i int) (*IfaceStats, error) {
 		v := strings.TrimSpace(a[1])
 		switch a[0] {
 		case "in":
-			stats.In = p.ParseInt64(v, 10)
+			stats.PacketsReceived = p.ParseInt64(v, 10)
 		case "link":
 			stats.Link = p.ParseInt(v, 10)
 		case "out":
-			stats.Out = p.ParseInt64(v, 10)
+			stats.PacketsSent = p.ParseInt64(v, 10)
 		case "crc":
 			stats.NumCRCErr = p.ParseInt(v, 10)
 		case "overflows":
