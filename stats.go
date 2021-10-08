@@ -2,7 +2,6 @@ package stats
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,8 +21,9 @@ type SysStats struct {
 }
 
 // ReadSysStats reads system statistics from /dev/sysstat.
-func ReadSysStats(rootdir string) ([]*SysStats, error) {
-	file := filepath.Join(rootdir, "/dev/sysstat")
+func ReadSysStats(opts ...Option) ([]*SysStats, error) {
+	cfg := newConfig(opts...)
+	file := filepath.Join(cfg.rootdir, "/dev/sysstat")
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -77,9 +77,9 @@ type InterfaceStats struct {
 	Addr             string
 }
 
-func ReadInterfaceStats(netroot string, i int) (*InterfaceStats, error) {
-	ether := fmt.Sprintf("ether%d", i)
-	file := filepath.Join(netroot, ether, "stats")
+func ReadInterfaceStats(opts ...Option) (*InterfaceStats, error) {
+	cfg := newConfig(opts...)
+	file := filepath.Join(cfg.rootdir, "stats")
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -130,4 +130,13 @@ func ReadInterfaceStats(netroot string, i int) (*InterfaceStats, error) {
 		return nil, err
 	}
 	return &stats, nil
+}
+
+type TCPStats struct {
+	MaxConn            int
+	MaxSegment         int
+	ActiveOpens        int
+	PassiveOpens       int
+	EstablishedResets  int
+	CurrentEstablished int
 }

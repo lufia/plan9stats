@@ -7,7 +7,7 @@ import (
 )
 
 func TestReadSysStats(t *testing.T) {
-	stat, err := ReadSysStats("testdata")
+	stat, err := ReadSysStats(WithRootDir("testdata"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestReadSysStats(t *testing.T) {
 }
 
 func TestReadInterfaceStats(t *testing.T) {
-	stats, err := ReadInterfaceStats("testdata/net", 0)
+	stats, err := ReadInterfaceStats(WithRootDir("testdata/net/ether0"))
 	if err != nil {
 		t.Fatal(err)
 	}

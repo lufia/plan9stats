@@ -21,7 +21,6 @@ var (
 type Host struct {
 	Sysname    string
 	CPU        *CPU
-	MemStats   *MemStats
 	Storages   []*Storage
 	Interfaces []*Interface
 }
@@ -37,22 +36,23 @@ type MemStats struct {
 	Total       int64 // total memory in byte
 	PageSize    int64 // a page size in byte
 	KernelPages int64
-	UserPages   Ratio
-	SwapPages   Ratio
+	UserPages   Gauge
+	SwapPages   Gauge
 
-	Malloced Ratio // kernel malloced data in byte
-	Graphics Ratio // kernel graphics data in byte
+	Malloced Gauge // kernel malloced data in byte
+	Graphics Gauge // kernel graphics data in byte
 }
 
-// Ratio is used/available ratio.
-type Ratio struct {
+// Gauge is used/available gauge.
+type Gauge struct {
 	Used  int64
 	Avail int64
 }
 
 // ReadMemStats reads memory statistics from /dev/swap.
-func ReadMemStats(rootdir string) (*MemStats, error) {
-	swap := filepath.Join(rootdir, "/dev/swap")
+func ReadMemStats(opts ...Option) (*MemStats, error) {
+	cfg := newConfig(opts...)
+	swap := filepath.Join(cfg.rootdir, "/dev/swap")
 	f, err := os.Open(swap)
 	if err != nil {
 		return nil, err
@@ -84,8 +84,8 @@ func ReadMemStats(rootdir string) (*MemStats, error) {
 			}
 			*v = n
 		case "user", "swap", "kernel malloc", "kernel draw":
-			v := m[key].(*Ratio)
-			if err := parseRatio(string(fields[0]), v); err != nil {
+			v := m[key].(*Gauge)
+			if err := parseGauge(string(fields[0]), v); err != nil {
 				return nil, err
 			}
 		}
@@ -96,7 +96,7 @@ func ReadMemStats(rootdir string) (*MemStats, error) {
 	return &stat, nil
 }
 
-func parseRatio(s string, r *Ratio) error {
+func parseGauge(s string, r *Gauge) error {
 	a := strings.SplitN(s, "/", 2)
 	if len(a) != 2 {
 		return fmt.Errorf("can't parse ratio: %s", s)
@@ -129,10 +129,11 @@ const (
 )
 
 // ReadInterfaces reads network interfaces from etherN.
-func ReadInterfaces(netroot string) ([]*Interface, error) {
+func ReadInterfaces(opts ...Option) ([]*Interface, error) {
+	cfg := newConfig(opts...)
 	var a []*Interface
 	for i := 0; i < numEther; i++ {
-		p, err := readInterface(netroot, i)
+		p, err := readInterface(cfg.rootdir, i)
 		if os.IsNotExist(err) {
 			continue
 		}
@@ -170,35 +171,30 @@ var (
 )
 
 // ReadHost reads host status.
-func ReadHost(rootdir string) (*Host, error) {
+func ReadHost(opts ...Option) (*Host, error) {
+	cfg := newConfig(opts...)
 	var h Host
-	name, err := readSysname(rootdir)
+	name, err := readSysname(cfg.rootdir)
 	if err != nil {
 		return nil, err
 	}
 	h.Sysname = name
 
-	cpu, err := readCPUType(rootdir)
+	cpu, err := readCPUType(cfg.rootdir)
 	if err != nil {
 		return nil, err
 	}
 	h.CPU = cpu
 
-	m, err := ReadMemStats(rootdir)
-	if err != nil {
-		return nil, err
-	}
-	h.MemStats = m
-
-	a, err := readStorages(rootdir)
+	a, err := readStorages(cfg.rootdir)
 	if err != nil {
 		return nil, err
 	}
 	h.Storages = a
 
 	for _, s := range netdirs {
-		netroot := filepath.Join(rootdir, s)
-		ifaces, err := ReadInterfaces(netroot)
+		netroot := filepath.Join(cfg.rootdir, s)
+		ifaces, err := ReadInterfaces(WithRootDir(netroot))
 		if err != nil {
 			return nil, err
 		}
@@ -311,9 +307,9 @@ func readStorage(dir string) (*Storage, error) {
 	return &s, nil
 }
 
-type Ipifc struct {
+type IPStats struct {
 	ID      int    // number of interface in ipifc dir
-	Dev     string // associated physical device
+	Device  string // associated physical device
 	MTU     int    // max transfer unit
 	Sendra6 uint8  // on == send router adv
 	Recvra6 uint8  // on == recv router adv

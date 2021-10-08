@@ -7,7 +7,7 @@ import (
 )
 
 func TestReadHost(t *testing.T) {
-	h, err := ReadHost("testdata")
+	h, err := ReadHost(WithRootDir("testdata"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -16,15 +16,6 @@ func TestReadHost(t *testing.T) {
 		CPU: &CPU{
 			Name:  "Core i7/Xeon",
 			Clock: 2403,
-		},
-		MemStats: &MemStats{
-			Total:       1071185920,
-			PageSize:    4096,
-			KernelPages: 61372,
-			UserPages:   Ratio{Used: 2792, Avail: 200148},
-			SwapPages:   Ratio{Used: 0, Avail: 160000},
-			Malloced:    Ratio{Used: 9046176, Avail: 219352384},
-			Graphics:    Ratio{Used: 0, Avail: 16777216},
 		},
 		Storages: []*Storage{
 			&Storage{
@@ -46,5 +37,24 @@ func TestReadHost(t *testing.T) {
 	}
 	if !cmp.Equal(h, want) {
 		t.Errorf("ReadHost: %v", cmp.Diff(h, want))
+	}
+}
+
+func TestReadMemStats(t *testing.T) {
+	h, err := ReadMemStats(WithRootDir("testdata"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := &MemStats{
+		Total:       1071185920,
+		PageSize:    4096,
+		KernelPages: 61372,
+		UserPages:   Gauge{Used: 2792, Avail: 200148},
+		SwapPages:   Gauge{Used: 0, Avail: 160000},
+		Malloced:    Gauge{Used: 9046176, Avail: 219352384},
+		Graphics:    Gauge{Used: 0, Avail: 16777216},
+	}
+	if !cmp.Equal(h, want) {
+		t.Errorf("ReadMemStats: %v", cmp.Diff(h, want))
 	}
 }
