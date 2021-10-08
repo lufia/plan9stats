@@ -2,6 +2,7 @@ package stats
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,7 @@ type SysStats struct {
 }
 
 // ReadSysStats reads system statistics from /dev/sysstat.
-func ReadSysStats(opts ...Option) ([]*SysStats, error) {
+func ReadSysStats(ctx context.Context, opts ...Option) ([]*SysStats, error) {
 	cfg := newConfig(opts...)
 	file := filepath.Join(cfg.rootdir, "/dev/sysstat")
 	f, err := os.Open(file)
@@ -77,7 +78,7 @@ type InterfaceStats struct {
 	Addr             string
 }
 
-func ReadInterfaceStats(opts ...Option) (*InterfaceStats, error) {
+func ReadInterfaceStats(ctx context.Context, opts ...Option) (*InterfaceStats, error) {
 	cfg := newConfig(opts...)
 	file := filepath.Join(cfg.rootdir, "stats")
 	f, err := os.Open(file)

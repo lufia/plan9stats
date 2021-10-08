@@ -4,6 +4,7 @@ package stats
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -49,8 +50,12 @@ type Gauge struct {
 	Avail int64
 }
 
+func (g Gauge) Free() int64 {
+	return g.Avail - g.Used
+}
+
 // ReadMemStats reads memory statistics from /dev/swap.
-func ReadMemStats(opts ...Option) (*MemStats, error) {
+func ReadMemStats(ctx context.Context, opts ...Option) (*MemStats, error) {
 	cfg := newConfig(opts...)
 	swap := filepath.Join(cfg.rootdir, "/dev/swap")
 	f, err := os.Open(swap)
@@ -129,7 +134,7 @@ const (
 )
 
 // ReadInterfaces reads network interfaces from etherN.
-func ReadInterfaces(opts ...Option) ([]*Interface, error) {
+func ReadInterfaces(ctx context.Context, opts ...Option) ([]*Interface, error) {
 	cfg := newConfig(opts...)
 	var a []*Interface
 	for i := 0; i < numEther; i++ {
@@ -171,7 +176,7 @@ var (
 )
 
 // ReadHost reads host status.
-func ReadHost(opts ...Option) (*Host, error) {
+func ReadHost(ctx context.Context, opts ...Option) (*Host, error) {
 	cfg := newConfig(opts...)
 	var h Host
 	name, err := readSysname(cfg.rootdir)
@@ -194,7 +199,7 @@ func ReadHost(opts ...Option) (*Host, error) {
 
 	for _, s := range netdirs {
 		netroot := filepath.Join(cfg.rootdir, s)
-		ifaces, err := ReadInterfaces(WithRootDir(netroot))
+		ifaces, err := ReadInterfaces(ctx, WithRootDir(netroot))
 		if err != nil {
 			return nil, err
 		}

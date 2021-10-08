@@ -1,13 +1,15 @@
 package stats
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestReadSysStats(t *testing.T) {
-	stat, err := ReadSysStats(WithRootDir("testdata"))
+	ctx := context.Background()
+	stat, err := ReadSysStats(ctx, WithRootDir("testdata"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +45,8 @@ func TestReadSysStats(t *testing.T) {
 }
 
 func TestReadInterfaceStats(t *testing.T) {
-	stats, err := ReadInterfaceStats(WithRootDir("testdata/net/ether0"))
+	ctx := context.Background()
+	stats, err := ReadInterfaceStats(ctx, WithRootDir("testdata/net/ether0"))
 	if err != nil {
 		t.Fatal(err)
 	}

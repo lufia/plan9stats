@@ -1,13 +1,15 @@
 package stats
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestReadHost(t *testing.T) {
-	h, err := ReadHost(WithRootDir("testdata"))
+	ctx := context.Background()
+	h, err := ReadHost(ctx, WithRootDir("testdata"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +43,8 @@ func TestReadHost(t *testing.T) {
 }
 
 func TestReadMemStats(t *testing.T) {
-	h, err := ReadMemStats(WithRootDir("testdata"))
+	ctx := context.Background()
+	h, err := ReadMemStats(ctx, WithRootDir("testdata"))
 	if err != nil {
 		t.Fatal(err)
 	}
