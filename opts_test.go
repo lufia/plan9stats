@@ -21,8 +21,8 @@ func TestOptions(t *testing.T) {
 	o := cmp.AllowUnexported(Config{})
 	for _, tt := range tests {
 		cfg := newConfig(tt.opts...)
-		if !cmp.Equal(cfg, tt.cfg, o) {
-			t.Errorf("newConfig: %s", cmp.Diff(cfg, tt.cfg, o))
+		if !cmp.Equal(tt.cfg, cfg, o) {
+			t.Errorf("newConfig: %s", cmp.Diff(tt.cfg, cfg, o))
 		}
 	}
 }

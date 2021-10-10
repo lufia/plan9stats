@@ -39,8 +39,8 @@ func TestReadSysStats(t *testing.T) {
 			Interrupt:    1,
 		},
 	}
-	if !cmp.Equal(stat, want) {
-		t.Errorf("ReadSysStats: %v", cmp.Diff(stat, want))
+	if !cmp.Equal(want, stat) {
+		t.Errorf("ReadSysStats: %v", cmp.Diff(want, stat))
 	}
 }
 
@@ -64,7 +64,7 @@ func TestReadInterfaceStats(t *testing.T) {
 		Mbps:             1000,
 		Addr:             "525409008379",
 	}
-	if !cmp.Equal(stats, want) {
-		t.Errorf("ReadInterfaceStats: %v", cmp.Diff(stats, want))
+	if !cmp.Equal(want, stats) {
+		t.Errorf("ReadInterfaceStats: %v", cmp.Diff(want, stats))
 	}
 }

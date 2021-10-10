@@ -37,8 +37,8 @@ func TestReadHost(t *testing.T) {
 			},
 		},
 	}
-	if !cmp.Equal(h, want) {
-		t.Errorf("ReadHost: %v", cmp.Diff(h, want))
+	if !cmp.Equal(want, h) {
+		t.Errorf("ReadHost: %v", cmp.Diff(want, h))
 	}
 }
 
@@ -57,7 +57,7 @@ func TestReadMemStats(t *testing.T) {
 		Malloced:    Gauge{Used: 9046176, Avail: 219352384},
 		Graphics:    Gauge{Used: 0, Avail: 16777216},
 	}
-	if !cmp.Equal(h, want) {
-		t.Errorf("ReadMemStats: %v", cmp.Diff(h, want))
+	if !cmp.Equal(want, h) {
+		t.Errorf("ReadMemStats: %v", cmp.Diff(want, h))
 	}
 }
