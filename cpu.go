@@ -1,8 +1,11 @@
 package stats
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,6 +14,96 @@ import (
 	"strings"
 	"time"
 )
+
+// CPUType represents /dev/cputype.
+type CPUType struct {
+	Name  string
+	Clock int // clock rate in MHz
+}
+
+func ReadCPUType(ctx context.Context, opts ...Option) (*CPUType, error) {
+	cfg := newConfig(opts...)
+	var c CPUType
+	if err := readCPUType(cfg.rootdir, &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+type SysStats struct {
+	ID           int
+	NumCtxSwitch int64
+	NumInterrupt int64
+	NumSyscall   int64
+	NumFault     int64
+	NumTLBFault  int64
+	NumTLBPurge  int64
+	LoadAvg      int64 // in units of milli-CPUs and is decayed over time
+	Idle         int   // percentage
+	Interrupt    int   // percentage
+}
+
+// ReadSysStats reads system statistics from /dev/sysstat.
+func ReadSysStats(ctx context.Context, opts ...Option) ([]*SysStats, error) {
+	cfg := newConfig(opts...)
+	file := filepath.Join(cfg.rootdir, "/dev/sysstat")
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	var stats []*SysStats
+	for scanner.Scan() {
+		a := strings.Fields(scanner.Text())
+		if len(a) != 10 {
+			continue
+		}
+		var (
+			p    intParser
+			stat SysStats
+		)
+		stat.ID = p.ParseInt(a[0], 10)
+		stat.NumCtxSwitch = p.ParseInt64(a[1], 10)
+		stat.NumInterrupt = p.ParseInt64(a[2], 10)
+		stat.NumSyscall = p.ParseInt64(a[3], 10)
+		stat.NumFault = p.ParseInt64(a[4], 10)
+		stat.NumTLBFault = p.ParseInt64(a[5], 10)
+		stat.NumTLBPurge = p.ParseInt64(a[6], 10)
+		stat.LoadAvg = p.ParseInt64(a[7], 10)
+		stat.Idle = p.ParseInt(a[8], 10)
+		stat.Interrupt = p.ParseInt(a[9], 10)
+		if err := p.Err(); err != nil {
+			return nil, err
+		}
+		stats = append(stats, &stat)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return stats, nil
+}
+
+func readCPUType(rootdir string, c *CPUType) error {
+	file := filepath.Join(rootdir, "/dev/cputype")
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	b = bytes.TrimSpace(b)
+	i := bytes.LastIndexByte(b, ' ')
+	if i < 0 {
+		return fmt.Errorf("%s: invalid format", file)
+	}
+	clock, err := strconv.Atoi(string(b[i+1:]))
+	if err != nil {
+		return err
+	}
+	c.Name = string(b[:i])
+	c.Clock = clock
+	return nil
+}
 
 // Time represents /dev/time.
 type Time struct {
@@ -106,6 +199,7 @@ func ReadCPUStats(ctx context.Context, opts ...Option) (*CPUStats, error) {
 	if err := readTime(file, &t); err != nil {
 		return nil, err
 	}
+	// TODO(lufia): In multi-processor host, Idle should multiple by core numbers.
 	stat.Idle = t.Uptime() - stat.User - stat.Sys
 	return &stat, nil
 }

@@ -1,4 +1,3 @@
-// Package stats provides statistic utilities for Plan 9.
 package stats
 
 import (
@@ -21,15 +20,8 @@ var (
 // Host represents host status.
 type Host struct {
 	Sysname    string
-	CPU        *CPUType
 	Storages   []*Storage
 	Interfaces []*Interface
-}
-
-// CPUType
-type CPUType struct {
-	Name  string
-	Clock int // clock rate in MHz
 }
 
 // MemStats represents the memory statistics.
@@ -185,12 +177,6 @@ func ReadHost(ctx context.Context, opts ...Option) (*Host, error) {
 	}
 	h.Sysname = name
 
-	cpu, err := readCPUType(cfg.rootdir)
-	if err != nil {
-		return nil, err
-	}
-	h.CPU = cpu
-
 	a, err := readStorages(cfg.rootdir)
 	if err != nil {
 		return nil, err
@@ -215,27 +201,6 @@ func readSysname(rootdir string) (string, error) {
 		return "", err
 	}
 	return string(bytes.TrimSpace(b)), nil
-}
-
-func readCPUType(rootdir string) (*CPUType, error) {
-	file := filepath.Join(rootdir, "/dev/cputype")
-	b, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	b = bytes.TrimSpace(b)
-	i := bytes.LastIndexByte(b, ' ')
-	if i < 0 {
-		return nil, fmt.Errorf("%s: invalid format", file)
-	}
-	clock, err := strconv.Atoi(string(b[i+1:]))
-	if err != nil {
-		return nil, err
-	}
-	return &CPUType{
-		Name:  string(b[:i]),
-		Clock: clock,
-	}, nil
 }
 
 func readStorages(rootdir string) ([]*Storage, error) {

@@ -15,10 +15,6 @@ func TestReadHost(t *testing.T) {
 	}
 	want := &Host{
 		Sysname: "gnot",
-		CPU: &CPUType{
-			Name:  "Core i7/Xeon",
-			Clock: 2403,
-		},
 		Storages: []*Storage{
 			&Storage{
 				Name:     "sdC0",
