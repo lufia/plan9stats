@@ -21,13 +21,13 @@ var (
 // Host represents host status.
 type Host struct {
 	Sysname    string
-	CPU        *CPU
+	CPU        *CPUType
 	Storages   []*Storage
 	Interfaces []*Interface
 }
 
-// CPU
-type CPU struct {
+// CPUType
+type CPUType struct {
 	Name  string
 	Clock int // clock rate in MHz
 }
@@ -217,7 +217,7 @@ func readSysname(rootdir string) (string, error) {
 	return string(bytes.TrimSpace(b)), nil
 }
 
-func readCPUType(rootdir string) (*CPU, error) {
+func readCPUType(rootdir string) (*CPUType, error) {
 	file := filepath.Join(rootdir, "/dev/cputype")
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -232,7 +232,7 @@ func readCPUType(rootdir string) (*CPU, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &CPU{
+	return &CPUType{
 		Name:  string(b[:i]),
 		Clock: clock,
 	}, nil
