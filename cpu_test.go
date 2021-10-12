@@ -21,7 +21,7 @@ func TestReadCPUStats(t *testing.T) {
 	want := &CPUStats{
 		User: userTime,
 		Sys:  sysTime,
-		Idle: (1412961713341830 - userTime - sysTime),
+		Idle: (1412961713341830*2 - userTime - sysTime),
 	}
 	if !cmp.Equal(want, stat) {
 		t.Errorf("ReadCPUTime: %v", cmp.Diff(want, stat))

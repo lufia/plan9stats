@@ -159,6 +159,11 @@ type CPUStats struct {
 
 func ReadCPUStats(ctx context.Context, opts ...Option) (*CPUStats, error) {
 	cfg := newConfig(opts...)
+	a, err := ReadSysStats(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
 	dir := filepath.Join(cfg.rootdir, "/proc")
 	d, err := os.Open(dir)
 	if err != nil {
@@ -199,8 +204,9 @@ func ReadCPUStats(ctx context.Context, opts ...Option) (*CPUStats, error) {
 	if err := readTime(file, &t); err != nil {
 		return nil, err
 	}
-	// TODO(lufia): In multi-processor host, Idle should multiple by core numbers.
-	stat.Idle = t.Uptime() - stat.User - stat.Sys
+	// In multi-processor host, Idle should multiple by number of cores.
+	u := t.Uptime() * time.Duration(len(a))
+	stat.Idle = u - stat.User - stat.Sys
 	return &stat, nil
 }
 
