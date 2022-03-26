@@ -20,6 +20,14 @@ func TestReadHost(t *testing.T) {
 				Name:     "sdC0",
 				Model:    "QEMU HARDDISK",
 				Capacity: 209715200 * 512, // 100GB
+				Partitions: []*Partition{
+					{"data", 0, 209715200},
+					{"plan9", 63, 209712510},
+					{"9fat", 63, 204863},
+					{"nvram", 204863, 204864},
+					{"fossil", 204864, 208663934},
+					{"swap", 208663934, 209712510},
+				},
 			},
 			&Storage{
 				Name:  "sdD0",
