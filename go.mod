@@ -1,5 +1,7 @@
 module github.com/lufia/plan9stats
 
-go 1.16
+go 1.21
 
-require github.com/google/go-cmp v0.6.0
+toolchain go1.24.0
+
+require github.com/google/go-cmp v0.7.0
