@@ -5,6 +5,8 @@ on:
     branches:
     - main
   pull_request:
+permissions:
+  contents: read
 jobs:
   test:
     uses: lufia/workflows/.github/workflows/go-test.yml@87182a21e45d32572eea26d16b42baf1e5da0537 # v0.12.0
